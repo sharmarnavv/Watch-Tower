@@ -1,4 +1,5 @@
-# Uptime Web3
+# Watch Tower
+
 
 A web3-based uptime monitoring system built with TypeScript, Next.js, and Bun.
 
