@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String      @id     @default(uuid())
+  email     String
+  password  String
+  // websites  Website[]    --> Foreign key relation that is not necessary as we use Clerk for authentication
+}
+
+model Website {
+  id        String      @id     @default(uuid())
+  url       String
+  userID    String
+  // user      User        @relation(fields: [userID], references: [id]
+  ticks     websiteTick[]
+  disabled  Boolean     @default(false)
+}
+
+//In the frontend, we can check the last n ticks of a website and then display the status (up or down) accordingly
+model websiteTick{
+  id            String      @id     @default(uuid())
+  websiteID     String
+  validatorID   String
+  createdAt     DateTime    @default(now())
+  status        websiteStatus
+  latency       Float
+  website       Website     @relation(fields: [websiteID], references: [id])
+  validator     Validator   @relation(fields: [validatorID], references: [id])
+}
+
+model Validator {
+  id            String      @id     @default(uuid())
+  publicKey     String
+  location      String
+  ip            String
+  ticks         websiteTick[]
+}
+
+enum websiteStatus {
+  UP
+  DOWN
+}
+
+

@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: uptime_web3
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      target: development
+    command: sh -c "cd packages/db && npx prisma migrate dev --name init && cd ../../apps/api && bun run dev"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/uptime_web3
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: .
+      target: development
+    command: sh -c "cd apps/frontend && bun run dev"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:

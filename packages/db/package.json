@@ -1,0 +1,26 @@
+{
+  "name": "db",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^22.14.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.5.0",
+    "prisma": "^6.5.0"
+  },
+  "exports": {
+    "./client": "./src/index.ts"
+  },
+  "prisma": {
+    "seed": "tsx ./seed.ts"
+  }
+}

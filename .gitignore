@@ -4,35 +4,54 @@
 node_modules
 .pnp
 .pnp.js
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+.pnpm-debug.log*
 
-# Local env files
-.env
+# Testing
+coverage
+*.lcov
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# Environment files
+.env*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Testing
-coverage
-
-# Turbo
-.turbo
-
-# Vercel
-.vercel
-
-# Build Outputs
-.next/
-out/
-build
-dist
-
-
-# Debug
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+logs
+*.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# Misc
+# Cache
+.turbo
+.vercel
+.eslintcache
+.cache
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+
+# OS
 .DS_Store
 *.pem
+Thumbs.db
+
