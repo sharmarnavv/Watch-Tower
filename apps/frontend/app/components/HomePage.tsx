@@ -13,7 +13,7 @@ export default function HomePage() {
           <div className="text-center">
             <Activity className="h-16 w-16 text-blue-500 mx-auto mb-8" />
             <h1 className="text-5xl font-bold tracking-tight mb-6 bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text">
-              Better Uptime Monitoring
+              Watch Tower
             </h1>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
               Monitor your services 24/7 with real-time alerts and detailed analytics. Never miss a downtime again.
@@ -103,7 +103,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="bg-gray-800/30 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
-          <p>© 2025 Better Uptime Monitoring. All rights reserved.</p>
+          <p>© 2025 Watch Tower. All rights reserved.</p>
         </div>
       </footer>
     </div>

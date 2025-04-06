@@ -11,7 +11,7 @@ import {
 
 export function Appbar(){
     return <div className="flex justify-between items-center p-4">
-        <div>Dpin uptime</div>
+        <div className= "text-2xl font-bold">Watch Tower</div>
         {/*The following is the code for the sign in button and sign up button and the user button
         //The SignedOut and SignedIn components are used to determine if the user is signed in or not
         // If the user is signed in, the user button is shown
