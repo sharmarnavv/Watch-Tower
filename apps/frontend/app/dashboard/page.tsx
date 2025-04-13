@@ -7,11 +7,11 @@ import axios from 'axios';
 import { API_BACKEND_URL } from '@/config';
 import { useAuth } from '@clerk/nextjs';
 
-type WebsiteStatus = 'up' | 'down' | 'unknown';
+type WebsiteStatus = 'UP' | 'DOWN' | 'unknown';
 
 function StatusCircle({ status }: { status: WebsiteStatus }) {
   return (
-    <div className={`w-3 h-3 rounded-full ${status === 'up' ? 'bg-green-500' : status === 'down' ? 'bg-red-500' : 'bg-gray-400' }`} />
+    <div className={`w-3 h-3 rounded-full ${status === 'UP' ? 'bg-green-500' : status === 'DOWN' ? 'bg-red-500' : 'bg-gray-400' }`} />
   );
 }
 
@@ -186,14 +186,14 @@ function WebsiteCard({ website, onDelete }: {
 
   // Get current status from the most recent tick, or 'unknown' if no ticks
   const currentStatus = sortedTicks.length > 0
-    ? sortedTicks[0].status.toLowerCase() as WebsiteStatus
+    ? sortedTicks[0].status as WebsiteStatus
     : 'unknown';
   // console.log('Current status:', currentStatus);
   // Calculate uptime percentage
   const calculateUptime = () => {
     if (ticks.length === 0) return { value: 0, status: 'unknown' };
 
-    const upTicks = ticks.filter(tick => tick.status.toLowerCase() === 'up').length;
+    const upTicks = ticks.filter(tick => tick.status === 'UP').length;
     const percentage = Number(((upTicks / ticks.length) * 100).toFixed(1));
 
     let status = 'unknown';

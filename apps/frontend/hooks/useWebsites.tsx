@@ -10,7 +10,7 @@ interface Website {
     ticks: Array<{
       id: string;
       createdAt: string;
-      status: 'UP' | 'DOWN' ;
+      status: 'UP' | 'DOWN'; // Fixed from lowercase
       latency: number;
     }>;
 }

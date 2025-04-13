@@ -3,6 +3,11 @@ import { authMiddleware } from "./middleware"
 import { prismaClient } from "db/client"
 import cors from "cors";
 import type { AuthenticatedRequest } from "./types";
+import { Transaction, SystemProgram, Connection } from "@solana/web3.js";
+import { Keypair } from "@solana/web3.js";
+import * as bs58 from 'bs58';
+
+const connection = new Connection("https://api.mainnet-beta.solana.com");
 
 const app = express()
 app.use(cors())
@@ -94,12 +99,47 @@ app.delete("/app/v1/website/", async (req: AuthenticatedRequest, res) => {
     })
 } )
 
-// Add this near the top of your routes
+app.post("/api/v1/payout/:validatorId", async (req, res) => {
+   const validatorId = req.params.validatorId;
+   const userID = req.userID!;
+   try {
+    const validator = await prismaClient.validator.findFirst({
+        where: {
+            id: validatorId,
+        }
+    })
+
+    if (!validator) {
+        return res.status(404).json({ message: "Validator not found" });
+    }
+
+    const payerKeypair = Keypair.fromSecretKey(bs58.default.decode(process.env.PRIVATE_KEY as string));
+
+    const transaction = new Transaction();
+    transaction.add(
+        SystemProgram.transfer({
+            fromPubkey: payerKeypair.publicKey,
+            toPubkey: validator.publicKey,
+            lamports: validator.pendingPayouts,
+        })
+    );
+    
+    const data = await prismaClient.validator.update({
+        where : {
+            id: validatorId,
+        },
+        data: {
+            pendingPayouts: 0,
+        }
+    })
+})
+
+app.listen(8080);
+
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Add this near your health check endpoint
 app.get("/debug/db", async (req, res) => {
     try {
       const users = await prismaClient.user.findMany();

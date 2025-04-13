@@ -15,6 +15,18 @@ const callbacks: {
     [callbackID: string]: (data: IncomingMessage) => void;
 } = {};
 const COST_PER_VALIDATION = 100 //in lamports
+const CALLBACK_TIMEOUT = 30000; // 30 seconds
+const MONITORING_INTERVAL = 60 * 1000; // 1 minute in milliseconds
+
+function registerCallback(callbackID: string, callback: (data: IncomingMessage) => void) {
+    callbacks[callbackID] = callback;
+    setTimeout(() => {
+        if (callbacks[callbackID]) {
+            delete callbacks[callbackID];
+            console.warn(`Callback ${callbackID} timed out`);
+        }
+    }, CALLBACK_TIMEOUT);
+}
 
 Bun.serve({
     fetch(req, server) {
@@ -106,57 +118,84 @@ async function verifyMessage(message: string, publicKey: string, signature: stri
     return result;
 }
 
-setInterval(async () => {
-    const websitesToMonitor = await prismaClient.website.findMany({
-        where: {
-            disabled: false,
-        },
-    });
+console.log('Starting website monitoring...');
+// Immediate first check
+checkWebsites();
+// Then set up interval
+setInterval(checkWebsites, MONITORING_INTERVAL);
 
-    for (const website of websitesToMonitor) {
-        availableValidators.forEach(validator => {
-            const callbackID = randomUUIDv7();
-            console.log(`Sending validate to ${validator.validatorID} ${website.url}`);
-            validator.socket.send(JSON.stringify({
-                type: 'validate',
-                data: {
-                    url: website.url,
-                    callbackID
-                },
-            }));
-
-            callbacks[callbackID] = async (data: IncomingMessage) => {
-                if (data.type === 'Validate') {
-                    const { validatorID, status, latency, signedMessage } = data.data;
-                    const verified = await verifyMessage(
-                        `Replying to ${callbackID}`,
-                        validator.publicKey,
-                        signedMessage
-                    );
-                    if (!verified) {
-                        return;
-                    }
-
-                    await prismaClient.$transaction(async (tx) => {
-                        await tx.websiteTick.create({
-                            data: {
-                                websiteID: website.id,
-                                validatorID,
-                                status,
-                                latency,
-                                createdAt: new Date(),
-                            },
-                        });
-
-                        await tx.validator.update({
-                            where: { id: validatorID },
-                            data: {
-                                pendingPayouts: { increment: COST_PER_VALIDATION }
-                            },
-                        });
-                    });
-                }
-            };
+async function checkWebsites() {
+    try {
+        const websitesToMonitor = await prismaClient.website.findMany({
+            where: {
+                disabled: false,
+            },
         });
+
+        console.log(`Checking ${websitesToMonitor.length} websites...`);
+        
+        for (const website of websitesToMonitor) {
+            availableValidators.forEach(validator => {
+                const callbackID = randomUUIDv7();
+                console.log(`Sending validate to ${validator.validatorID} ${website.url}`);
+                validator.socket.send(JSON.stringify({
+                    type: 'validate',
+                    data: {
+                        url: website.url,
+                        callbackID,
+                        websiteID: website.id  // Add this line to include websiteID
+                    },
+                }));
+
+                registerCallback(callbackID, async (data: IncomingMessage) => {
+                    if (data.type === 'Validate') {
+                        const { validatorID, status, latency, signedMessage } = data.data;
+                        const verified = await verifyMessage(
+                            `Replying to ${callbackID}`,
+                            validator.publicKey,
+                            signedMessage
+                        );
+                        if (!verified) {
+                            console.warn(`Invalid signature received for website ${website.url} from validator ${validatorID}`);
+                            return;
+                        }
+
+                        try {
+                            await prismaClient.$transaction(async (tx) => {
+                                const tick = await tx.websiteTick.create({
+                                    data: {
+                                        websiteID: website.id,
+                                        validatorID,
+                                        status,
+                                        latency,
+                                        createdAt: new Date(),
+                                    },
+                                });
+
+                                await tx.validator.update({
+                                    where: { id: validatorID },
+                                    data: {
+                                        pendingPayouts: { increment: COST_PER_VALIDATION }
+                                    },
+                                });
+
+                                console.log(`New tick for ${website.url}:`, {
+                                    tickId: tick.id,
+                                    websiteId: website.id,
+                                    validatorId: validatorID,
+                                    status,
+                                    latency: `${latency}ms`,
+                                    timestamp: tick.createdAt.toISOString()
+                                });
+                            });
+                        } catch (error) {
+                            console.error(`Failed to create tick for ${website.url}:`, error);
+                        }
+                    }
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error in website monitoring:', error);
     }
-}, 60 * 1000);
+}
