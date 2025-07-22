@@ -12,7 +12,7 @@ const connection = new Connection("https://api.mainnet-beta.solana.com");
 const app = express()
 app.use(cors())
 app.use(express.json())
-app.use(authMiddleware as express.RequestHandler)  // Type cast the middleware
+app.use(authMiddleware as express.RequestHandler)  
 
 app.post("/app/v1/website", async (req: AuthenticatedRequest, res) => {
     const userID = req.userID!; // This is the userID that we set in the authMiddleware. The ! is to make sure that the userID is not null.
